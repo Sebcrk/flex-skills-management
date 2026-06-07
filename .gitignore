@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment variables — never commit credentials
+.env
+**/.env
+
+# Flex plugin build output
+build/
+**/build/
+
+# Flex local config (contains account SID)
+public/appConfig.js
+**/public/appConfig.js
+pluginsService.js
+**/pluginsService.js
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Claude Code local settings
+.claude/
+**/.claude/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Misc
+*.tgz
+.yarn-integrity
+.npm
+.eslintcache
