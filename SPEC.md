@@ -39,7 +39,7 @@ A Twilio Flex 2.x plugin that provides supervisors a dedicated "Skills Managemen
 5. Supervisor adds a skill (free-text input) or removes a skill (from displayed chips)
 6. Removal triggers a confirmation dialog every time
 7. On confirm, plugin calls `update-skills` function with token, worker SIDs, action, and skill
-8. Function decodes token for supervisor identity, performs surgical attribute merge, returns results
+8. Function extracts supervisor identity from the validated token (`event.TokenResult.identity`), performs surgical attribute merge on `routing.skills`, returns results
 9. UI shows toast for warnings (e.g., "2 of 3 workers already had 'english'") or errors
 10. Audit log table updates in React state
 11. Worker list re-fetches to reflect new state
@@ -74,15 +74,17 @@ A Twilio Flex 2.x plugin that provides supervisors a dedicated "Skills Managemen
 ### get-workers
 - **POC + Production**
 - Calls TaskRouter Workers List API with `PageSize=1000`
+- Reads skills from `attributes.routing.skills` (Flex standard path) — workers without this path return an empty skills array
 - Returns: `[{ sid, friendlyName, skills, activityName }]`
 - Comment: production needs proper pagination for >1000 workers
 
 ### update-skills
 - **POC + Production**
-- Accepts: `{ workerSids[], action (add|remove), skill, token }`
-- Decodes JWT token to extract supervisor identity
-- For each worker: fetches current attributes, performs surgical merge on `skills` array only, writes back full attributes object
-- Returns: `{ results: [{ workerSid, status, skipped? }], summary: { updated, skipped, failed } }`
+- Accepts: `{ workerSids[], action (add|remove), skill, Token }` (`Token` is the Flex JWT, validated by `twilio-flex-token-validator`)
+- Supervisor identity extracted from `event.TokenResult.identity` (set by the token validator)
+- For each worker: fetches current attributes, performs surgical merge on `attributes.routing.skills` only, writes back full attributes object
+- Initializes `attributes.routing = { skills: [], levels: {} }` if the key is absent
+- Returns: `{ results: [{ workerSid, status, reason? }], summary: { updated, skipped, failed }, supervisor }`
 - Comment: production should batch in groups of 10 with 100ms delay between batches for rate limiting
 
 ### Referenced production-only functions (not implemented in POC):
@@ -92,7 +94,25 @@ A Twilio Flex 2.x plugin that provides supervisors a dedicated "Skills Managemen
 
 ## Data Models
 
+### Worker attributes (TaskRouter raw format)
+
+Skills are stored under `attributes.routing.skills` — the Flex standard path:
+
+```json
+{
+  "attributes": {
+    "routing": {
+      "skills": ["english", "billing"],
+      "levels": {}
+    }
+  }
+}
+```
+
 ### Worker (from get-workers response)
+
+The serverless function maps each TaskRouter worker to this shape:
+
 ```json
 {
   "sid": "WKxxxxx",
@@ -121,7 +141,7 @@ A Twilio Flex 2.x plugin that provides supervisors a dedicated "Skills Managemen
 |----------|--------|-------|
 | Flex version | 2.x | Paste design system, React 18 |
 | Plugin type | Fresh via create-flex-plugin | Isolated POC |
-| Skill format | Flat string array in `attributes.skills` | Per Flex/TaskRouter docs |
+| Skill format | String array in `attributes.routing.skills` | Flex standard path; `routing.levels` is preserved but not exposed in UI |
 | Skill input | Free-text | No master list for POC |
 | Audit storage | React state (ephemeral) | Resets on refresh; production uses external DB |
 | Auth | Flex token decoded in function | Auto-renewed by Flex Manager |
