@@ -109,7 +109,8 @@ exports.handler = TokenValidator(async function (context, event, callback) {
           if (!attributes.routing) {
             attributes.routing = { skills: [], levels: {} };
           }
-          const currentSkills = attributes.routing.skills || [];
+          // Normalize existing skills to lowercase for consistent comparison and storage
+          const currentSkills = (attributes.routing.skills || []).map((s) => s.toLowerCase());
 
           if (action === 'add') {
             if (currentSkills.includes(normalizedSkill)) {
