@@ -90,7 +90,7 @@ exports.handler = TokenValidator(async function (context, event, callback) {
 
     const client = context.getTwilioClient();
     const workspaceSid = context.WORKSPACE_SID;
-    const normalizedSkill = skill.trim().toLowerCase();
+    const normalizedSkill = skill.trim();
 
     // POC: Process all workers in parallel
     // Production: Batch in groups of 10 with 100ms delay between batches
@@ -109,8 +109,7 @@ exports.handler = TokenValidator(async function (context, event, callback) {
           if (!attributes.routing) {
             attributes.routing = { skills: [], levels: {} };
           }
-          // Normalize existing skills to lowercase for consistent comparison and storage
-          const currentSkills = (attributes.routing.skills || []).map((s) => s.toLowerCase());
+          const currentSkills = attributes.routing.skills || [];
 
           if (action === 'add') {
             if (currentSkills.includes(normalizedSkill)) {

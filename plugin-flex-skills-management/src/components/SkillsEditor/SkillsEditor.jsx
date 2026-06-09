@@ -49,7 +49,7 @@ const SkillsEditor = ({ selectedWorkers, getToken, onUpdate }) => {
   }, [selectedWorkers]);
 
   const handleAddSkill = async () => {
-    const skill = newSkill.trim().toLowerCase();
+    const skill = newSkill.trim();
     if (!skill || selectedWorkers.length === 0) return;
 
     setIsUpdating(true);
